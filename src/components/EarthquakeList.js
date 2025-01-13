@@ -9,6 +9,29 @@ function EarthquakeList({ earthquakes }) {
     return 'earthquake-card-mild';
   };
 
+  // Tarih formatı için yardımcı fonksiyon
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date');
+      }
+      
+      return date.toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Tarih dönüştürme hatası:', error);
+      return dateString; // Hata durumunda orijinal string'i göster
+    }
+  };
+
   return (
     <div className="earthquake-list">
       {earthquakes.map((quake, index) => {
@@ -21,7 +44,7 @@ function EarthquakeList({ earthquakes }) {
             <div className="earthquake-info">
               <p><strong>Büyüklük:</strong> {quake.mag}</p>
               <p><strong>Derinlik:</strong> {quake.depth} km</p>
-              <p><strong>Tarih:</strong> {new Date(quake.date).toLocaleString('tr-TR')}</p>
+              <p><strong>Tarih:</strong> {formatDate(quake.date)}</p>
               <p><strong>Koordinatlar:</strong> {lat}, {lng}</p>
             </div>
           </div>

@@ -38,6 +38,29 @@ const getMarkerIcon = (magnitude) => {
 function EarthquakeMap({ earthquakes }) {
   const turkeyCenter = [39.0, 35.0];
 
+  // Tarih formatı için yardımcı fonksiyon
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        throw new Error('Invalid date');
+      }
+      
+      return date.toLocaleString('tr-TR', {
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    } catch (error) {
+      console.error('Tarih dönüştürme hatası:', error);
+      return dateString;
+    }
+  };
+
   // API verilerini kontrol et
   console.log('Raw earthquakes data:', earthquakes);
 
@@ -73,7 +96,7 @@ function EarthquakeMap({ earthquakes }) {
                 <h3>{quake.title}</h3>
                 <p><strong>Büyüklük:</strong> {quake.mag}</p>
                 <p><strong>Derinlik:</strong> {quake.depth} km</p>
-                <p><strong>Tarih:</strong> {new Date(quake.date).toLocaleString('tr-TR')}</p>
+                <p><strong>Tarih:</strong> {formatDate(quake.date)}</p>
               </div>
             </Popup>
           </Marker>
