@@ -65,42 +65,15 @@ const userLocationIcon = L.divIcon({
 });
 
 function EarthquakeMap({ earthquakes, userLocation }) {
-  // Başlangıç merkezi (eğer kullanıcı konumu varsa onu kullan)
   const mapCenter = userLocation ? [userLocation.lat, userLocation.lng] : [39.0, 35.0];
 
-  // Tarih formatı için yardımcı fonksiyon
-  const formatDate = (dateString) => {
-    try {
-      const date = new Date(dateString);
-      if (isNaN(date.getTime())) {
-        throw new Error('Invalid date');
-      }
-      
-      return date.toLocaleString('tr-TR', {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-        hour12: false
-      });
-    } catch (error) {
-      console.error('Tarih dönüştürme hatası:', error);
-      return dateString;
-    }
-  };
-
-  // API verilerini kontrol et
-  console.log('Raw earthquakes data:', earthquakes);
-
-  // Koordinatları kontrol et ve geçerli olanları filtrele
   const validEarthquakes = earthquakes.filter(quake => {
     const lat = parseFloat(quake.geojson.coordinates[1]);
     const lng = parseFloat(quake.geojson.coordinates[0]);
     return !isNaN(lat) && !isNaN(lng);
   });
 
+  console.log('Raw earthquakes data:', earthquakes);
   console.log('Valid earthquakes:', validEarthquakes);
 
   return (
