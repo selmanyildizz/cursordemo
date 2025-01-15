@@ -6,7 +6,7 @@ const DamageReportForm = ({ onSubmit }) => {
   const navigate = useNavigate();
   const [selectedImages, setSelectedImages] = useState([]);
   const [location, setLocation] = useState('');
-  const [autoLocation, setAutoLocation] = useState('');
+  const [autoLocation, setAutoLocation] = useState(null);
   const [description, setDescription] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
@@ -21,11 +21,18 @@ const DamageReportForm = ({ onSubmit }) => {
         navigator.geolocation.getCurrentPosition(resolve, reject);
       });
       
+      const lat = position.coords.latitude;
+      const lng = position.coords.longitude;
+      
+      setAutoLocation({
+        lat: lat,
+        lon: lng
+      });
+      
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${position.coords.latitude}&lon=${position.coords.longitude}&format=json`
+        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
       );
       const data = await response.json();
-      setAutoLocation(data.display_name);
       setLocation(data.display_name);
     } catch (error) {
       console.error('Konum alınamadı:', error);
@@ -87,17 +94,21 @@ const DamageReportForm = ({ onSubmit }) => {
       return;
     }
 
+    console.log('autoLocation:', autoLocation);
+
     const damageReport = {
       id: Date.now(),
       images: selectedImages,
       location,
       coordinates: {
-        lat: autoLocation?.lat || 39.0,
-        lng: autoLocation?.lon || 35.0
+        lat: parseFloat(autoLocation?.lat) || 39.0,
+        lng: parseFloat(autoLocation?.lon) || 35.0
       },
       description,
       timestamp: new Date().toISOString(),
     };
+
+    console.log('Rapor koordinatları:', damageReport.coordinates);
 
     try {
       await onSubmit(damageReport);

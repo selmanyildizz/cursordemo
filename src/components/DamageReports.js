@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import Slider from 'react-slick';
 import 'leaflet/dist/leaflet.css';
@@ -39,6 +39,34 @@ const DamageReports = ({ reports, isLoading }) => {
     ]
   };
 
+  const mapSettings = useMemo(() => {
+    if (reports.length === 0) {
+      return { center: [39.0, 35.0], zoom: 6 };
+    }
+
+    const lats = reports.map(r => r.coordinates.lat);
+    const lngs = reports.map(r => r.coordinates.lng);
+
+    const center = [
+      (Math.min(...lats) + Math.max(...lats)) / 2,
+      (Math.min(...lngs) + Math.max(...lngs)) / 2
+    ];
+
+    const latDiff = Math.max(...lats) - Math.min(...lats);
+    const lngDiff = Math.max(...lngs) - Math.min(...lngs);
+    const maxDiff = Math.max(latDiff, lngDiff);
+    
+    let zoom = 6;
+    if (maxDiff < 0.1) zoom = 13;
+    else if (maxDiff < 0.5) zoom = 11;
+    else if (maxDiff < 1) zoom = 10;
+    else if (maxDiff < 2) zoom = 9;
+    else if (maxDiff < 4) zoom = 8;
+    else if (maxDiff < 8) zoom = 7;
+
+    return { center, zoom };
+  }, [reports]);
+
   if (isLoading) {
     return (
       <div className="damage-reports">
@@ -66,8 +94,8 @@ const DamageReports = ({ reports, isLoading }) => {
         <h2>Hasar Bildirim Haritası</h2>
         <div className="map-container">
           <MapContainer 
-            center={[39.0, 35.0]} 
-            zoom={6} 
+            center={mapSettings.center}
+            zoom={mapSettings.zoom}
             style={{ height: '100%', width: '100%' }}
           >
             <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

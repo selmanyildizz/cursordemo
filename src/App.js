@@ -4,7 +4,7 @@ import './App.css';
 import EarthquakeList from './components/EarthquakeList';
 import EarthquakeMap from './components/EarthquakeMap';
 import Dashboard from './components/Dashboard';
-import { requestNotificationPermission, sendNotification, calculateDistance } from './utils/notificationUtils';
+import { requestNotificationPermission, calculateDistance } from './utils/notificationUtils';
 import Logo from './components/Logo';
 import Statistics from './components/Statistics';
 import Footer from './components/Footer';
@@ -12,6 +12,9 @@ import ImageUpload from './components/ImageUpload';
 import DamageReports from './components/DamageReports';
 import { addDamageReport, getDamageReports } from './services/damageReportService';
 import DamageReportForm from './components/DamageReportForm';
+import * as localDB from './services/localDatabase';
+import { initSync } from './services/syncService';
+import { subscribeUserToPush, sendNotification } from './services/notificationService';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -47,6 +50,28 @@ function App() {
 
     setupPermissions();
   }, []);
+
+  // Deprem verilerini çeken fonksiyon
+  const fetchEarthquakes = async () => {
+    try {
+      const response = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
+      const data = await response.json();
+      
+      if (data.status) {
+        // Depremleri tarih sırasına göre sırala
+        const sortedEarthquakes = data.result.sort((a, b) => 
+          new Date(b.date) - new Date(a.date)
+        );
+        
+        // Son 100 depremi al
+        return sortedEarthquakes.slice(0, 100);
+      }
+      return [];
+    } catch (error) {
+      console.error('Deprem verileri alınamadı:', error);
+      return [];
+    }
+  };
 
   // Deprem verilerini çekme ve kontrol etme
   useEffect(() => {
@@ -129,6 +154,73 @@ function App() {
       // Burada kullanıcıya hata mesajı gösterilebilir
     }
   };
+
+  // Offline veri senkronizasyonu
+  useEffect(() => {
+    const syncData = async () => {
+      try {
+        // Online ise verileri çek ve lokale kaydet
+        if (navigator.onLine) {
+          const earthquakes = await fetchEarthquakes();
+          await localDB.saveEarthquakes(earthquakes);
+          setEarthquakes(earthquakes);
+        } else {
+          // Offline ise lokal verileri kullan
+          const localEarthquakes = await localDB.getEarthquakes();
+          setEarthquakes(localEarthquakes);
+        }
+      } catch (error) {
+        console.error('Veri senkronizasyonu hatası:', error);
+      }
+    };
+
+    syncData();
+  }, []);
+
+  // Online/Offline durumu dinle
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log('Online moda geçildi');
+      // Online olunca verileri güncelle
+    };
+
+    const handleOffline = () => {
+      console.log('Offline moda geçildi');
+      // Offline durumunu kullanıcıya bildir
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Service worker ve sync başlatma
+  useEffect(() => {
+    const initApp = async () => {
+      try {
+        // Push notification'a abone ol
+        await subscribeUserToPush();
+        
+        // Senkronizasyonu başlat
+        initSync();
+        
+        // Offline durumu kontrol et
+        if (!navigator.onLine) {
+          sendNotification('Çevrimdışı Mod', {
+            body: 'Şu anda çevrimdışı moddasınız. Veriler önbelleğe alınacak.'
+          });
+        }
+      } catch (error) {
+        console.error('App initialization error:', error);
+      }
+    };
+
+    initApp();
+  }, []);
 
   return (
     <Router>
