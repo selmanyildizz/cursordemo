@@ -1,12 +1,17 @@
-.dashboard {
+.dashboard-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 20px;
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .services-section {
   padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .services-grid {
@@ -16,7 +21,7 @@
 }
 
 .service-card {
-  background: white;
+  background: #f7fafc;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
@@ -36,6 +41,9 @@
 
 .recent-earthquakes {
   padding: 20px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .recent-header {
@@ -52,11 +60,12 @@
 }
 
 .earthquake-mini-card {
-  padding: 10px;
+  padding: 15px;
   margin-bottom: 10px;
   border-radius: 8px;
   cursor: pointer;
   transition: transform 0.2s;
+  background: #f7fafc;
 }
 
 .earthquake-mini-card:hover {
@@ -72,4 +81,27 @@
 
 .mini-card-info p {
   margin: 5px 0;
+}
+
+/* Responsive tasarım */
+@media (max-width: 1024px) {
+  .dashboard-content {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Deprem kartları için renkler */
+.earthquake-card-severe {
+  background-color: #fff5f5;
+  border-left: 4px solid #f56565;
+}
+
+.earthquake-card-moderate {
+  background-color: #fffff0;
+  border-left: 4px solid #ecc94b;
+}
+
+.earthquake-card-mild {
+  background-color: #f0fff4;
+  border-left: 4px solid #48bb78;
 } 

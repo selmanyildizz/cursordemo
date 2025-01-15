@@ -41,7 +41,7 @@ function Dashboard({ earthquakes, onEarthquakeSelect, setView }) {
   };
 
   return (
-    <div className="dashboard">
+    <div className="dashboard-content">
       <div className="services-section">
         <h2>Acil Durum Servisleri</h2>
         <div className="services-grid">

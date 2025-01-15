@@ -6,6 +6,8 @@ import EarthquakeMap from './components/EarthquakeMap';
 import Dashboard from './components/Dashboard';
 import { requestNotificationPermission, sendNotification, calculateDistance } from './utils/notificationUtils';
 import Logo from './components/Logo';
+import Statistics from './components/Statistics';
+import Footer from './components/Footer';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -137,16 +139,16 @@ function AppContent({
           <h1>Türkiye Deprem Takip</h1>
           <div className="view-buttons">
             <button 
-              className={view === 'list' ? 'active' : ''} 
-              onClick={() => setView('list')}
+              className={location.pathname === '/statistics' ? '' : 'active'} 
+              onClick={() => navigate('/')}
             >
-              Liste Görünümü
+              Ana Sayfa
             </button>
             <button 
-              className={view === 'map' ? 'active' : ''} 
-              onClick={() => setView('map')}
+              className={location.pathname === '/statistics' ? 'active' : ''} 
+              onClick={() => navigate('/statistics')}
             >
-              Harita Görünümü
+              İstatistikler
             </button>
           </div>
         </div>
@@ -154,26 +156,9 @@ function AppContent({
       {loading ? (
         <p>Yükleniyor...</p>
       ) : (
-        <Routes>
-          <Route path="/" element={
-            view === 'map' ? (
-              <EarthquakeMap 
-                earthquakes={earthquakes} 
-                userLocation={userLocation}
-                selectedEarthquake={selectedEarthquake}
-              />
-            ) : (
-              <Dashboard 
-                earthquakes={earthquakes} 
-                userLocation={userLocation}
-                onEarthquakeSelect={setSelectedEarthquake}
-                setView={setView}
-              />
-            )
-          } />
-          <Route 
-            path="/allEarthquakes" 
-            element={
+        <main className="main-content">
+          <Routes>
+            <Route path="/" element={
               view === 'map' ? (
                 <EarthquakeMap 
                   earthquakes={earthquakes} 
@@ -181,15 +166,39 @@ function AppContent({
                   selectedEarthquake={selectedEarthquake}
                 />
               ) : (
-                <EarthquakeList 
+                <Dashboard 
                   earthquakes={earthquakes} 
                   userLocation={userLocation}
+                  onEarthquakeSelect={setSelectedEarthquake}
+                  setView={setView}
                 />
               )
-            } 
-          />
-        </Routes>
+            } />
+            <Route 
+              path="/statistics" 
+              element={<Statistics earthquakes={earthquakes} />} 
+            />
+            <Route 
+              path="/allEarthquakes" 
+              element={
+                view === 'map' ? (
+                  <EarthquakeMap 
+                    earthquakes={earthquakes} 
+                    userLocation={userLocation}
+                    selectedEarthquake={selectedEarthquake}
+                  />
+                ) : (
+                  <EarthquakeList 
+                    earthquakes={earthquakes} 
+                    userLocation={userLocation}
+                  />
+                )
+              } 
+            />
+          </Routes>
+        </main>
       )}
+      <Footer />
     </div>
   );
 }
