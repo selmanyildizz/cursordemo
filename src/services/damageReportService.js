@@ -1,28 +1,13 @@
 import { collection, addDoc, getDocs, query, orderBy } from 'firebase/firestore';
-import { db } from '../firebase/config';
-import { addToSyncQueue } from './syncService';
-import { openDB } from 'idb';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../firebase/config';
 
 // Hasar raporu ekle
 export const addDamageReport = async (report) => {
   try {
-    // Önce internet bağlantısını kontrol et
-    if (!navigator.onLine) {
-      // Offline ise raporu sync kuyruğuna ekle
-      await addToSyncQueue('ADD_DAMAGE_REPORT', report);
-      
-      // Kullanıcıya bilgi ver
-      alert('İnternet bağlantısı yok. Raporunuz kaydedildi ve internet bağlantısı sağlandığında otomatik olarak gönderilecek.');
-      
-      // Geçici bir ID ile raporu döndür
-      return {
-        id: `temp_${Date.now()}`,
-        ...report,
-        pending: true // Bekleyen bir rapor olduğunu belirt
-      };
-    }
+    console.log('Gönderilen rapor:', report); // Debug için
 
-    // Online ise normal şekilde Firestore'a kaydet
+    // Firestore'a raporu kaydet
     const docRef = await addDoc(collection(db, 'damageReports'), {
       location: report.location,
       coordinates: report.coordinates,
@@ -30,6 +15,8 @@ export const addDamageReport = async (report) => {
       timestamp: new Date().toISOString(),
       images: report.images
     });
+
+    console.log('Rapor başarıyla kaydedildi:', docRef.id); // Debug için
 
     return {
       id: docRef.id,
@@ -44,51 +31,14 @@ export const addDamageReport = async (report) => {
 // Tüm hasar raporlarını getir
 export const getDamageReports = async () => {
   try {
-    // Önce local storage'dan bekleyen raporları al
-    const pendingReports = await getPendingReports();
-    
-    // Online değilse sadece bekleyen raporları göster
-    if (!navigator.onLine) {
-      return pendingReports;
-    }
-
-    // Online ise Firestore'dan raporları al ve birleştir
-    const q = query(
-      collection(db, 'damageReports'), 
-      orderBy('timestamp', 'desc')
-    );
-    
+    const q = query(collection(db, 'damageReports'), orderBy('timestamp', 'desc'));
     const querySnapshot = await getDocs(q);
-    const firestoreReports = querySnapshot.docs.map(doc => ({
+    return querySnapshot.docs.map(doc => ({
       id: doc.id,
-      ...doc.data(),
-      pending: false
+      ...doc.data()
     }));
-
-    // Bekleyen ve mevcut raporları birleştir
-    return [...pendingReports, ...firestoreReports];
   } catch (error) {
     console.error('Hasar raporları alınırken hata:', error);
     throw error;
-  }
-};
-
-// Bekleyen raporları local storage'dan al
-const getPendingReports = async () => {
-  try {
-    const db = await openDB('syncDB', 1);
-    const tx = db.transaction('syncStore', 'readonly');
-    const store = tx.objectStore('syncStore');
-    const pendingItems = await store.getAll();
-    
-    return pendingItems
-      .filter(item => item.action === 'ADD_DAMAGE_REPORT')
-      .map(item => ({
-        ...item.data,
-        pending: true
-      }));
-  } catch (error) {
-    console.error('Bekleyen raporlar alınırken hata:', error);
-    return [];
   }
 }; 

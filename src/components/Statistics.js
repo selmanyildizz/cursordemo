@@ -1,105 +1,97 @@
-import React from 'react';
-import { 
-  LineChart, Line, BarChart, Bar, 
-  XAxis, YAxis, CartesianGrid, 
-  Tooltip, Legend, ResponsiveContainer 
-} from 'recharts';
+import React, { useMemo } from 'react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import './Statistics.css';
 
-function Statistics({ earthquakes }) {
-  // Son 24 saat içindeki depremleri filtrele
-  const last24Hours = earthquakes.filter(quake => {
-    const quakeTime = new Date(quake.date);
+const Statistics = ({ earthquakes }) => {
+  const stats = useMemo(() => {
+    if (!earthquakes || earthquakes.length === 0) {
+      return {
+        last24Hours: 0,
+        maxMagnitude: 0,
+        avgDepth: 0,
+        magnitudeDistribution: []
+      };
+    }
+
+    // Son 24 saat içindeki depremler
     const now = new Date();
-    const diff = now - quakeTime;
-    return diff <= 24 * 60 * 60 * 1000;
-  });
+    const last24Hours = earthquakes.filter(eq => {
+      const eqDate = new Date(eq.date);
+      const hoursDiff = (now - eqDate) / (1000 * 60 * 60);
+      return hoursDiff <= 24;
+    }).length;
 
-  // Büyüklük dağılımını hesapla
-  const magnitudeDistribution = earthquakes.reduce((acc, quake) => {
-    const mag = Math.floor(quake.mag);
-    acc[mag] = (acc[mag] || 0) + 1;
-    return acc;
-  }, {});
+    // En büyük deprem
+    const maxMagnitude = Math.max(...earthquakes.map(eq => eq.mag));
 
-  const magnitudeData = Object.entries(magnitudeDistribution).map(([mag, count]) => ({
-    magnitude: `${mag}.0-${mag}.9`,
-    count: count
-  }));
+    // Ortalama derinlik
+    const avgDepth = earthquakes.reduce((sum, eq) => sum + eq.depth, 0) / earthquakes.length;
 
-  // Derinlik dağılımını hesapla
-  const depthRanges = [
-    { range: '0-10', count: 0 },
-    { range: '10-30', count: 0 },
-    { range: '30-50', count: 0 },
-    { range: '50+', count: 0 }
-  ];
+    // Büyüklük dağılımı
+    const magnitudeRanges = [
+      { range: '0-2', count: 0 },
+      { range: '2-3', count: 0 },
+      { range: '3-4', count: 0 },
+      { range: '4-5', count: 0 },
+      { range: '5+', count: 0 }
+    ];
 
-  earthquakes.forEach(quake => {
-    const depth = quake.depth;
-    if (depth <= 10) depthRanges[0].count++;
-    else if (depth <= 30) depthRanges[1].count++;
-    else if (depth <= 50) depthRanges[2].count++;
-    else depthRanges[3].count++;
-  });
+    earthquakes.forEach(eq => {
+      if (eq.mag < 2) magnitudeRanges[0].count++;
+      else if (eq.mag < 3) magnitudeRanges[1].count++;
+      else if (eq.mag < 4) magnitudeRanges[2].count++;
+      else if (eq.mag < 5) magnitudeRanges[3].count++;
+      else magnitudeRanges[4].count++;
+    });
+
+    return {
+      last24Hours,
+      maxMagnitude,
+      avgDepth,
+      magnitudeDistribution: magnitudeRanges
+    };
+  }, [earthquakes]);
 
   return (
-    <div className="statistics-container">
+    <div className="statistics">
       <h2>Deprem İstatistikleri</h2>
       
-      <div className="stat-cards">
+      <div className="stats-cards">
         <div className="stat-card">
           <h3>Son 24 Saat</h3>
-          <p className="stat-number">{last24Hours.length}</p>
-          <p>Deprem</p>
+          <div className="stat-value">{stats.last24Hours}</div>
+          <div className="stat-label">Deprem</div>
         </div>
+
         <div className="stat-card">
           <h3>En Büyük Deprem</h3>
-          <p className="stat-number">
-            {Math.max(...earthquakes.map(q => q.mag)).toFixed(1)}
-          </p>
-          <p>Magnitude</p>
+          <div className="stat-value">{stats.maxMagnitude.toFixed(1)}</div>
+          <div className="stat-label">Magnitude</div>
         </div>
+
         <div className="stat-card">
           <h3>Ortalama Derinlik</h3>
-          <p className="stat-number">
-            {(earthquakes.reduce((acc, q) => acc + q.depth, 0) / earthquakes.length).toFixed(1)}
-          </p>
-          <p>km</p>
+          <div className="stat-value">{stats.avgDepth.toFixed(1)}</div>
+          <div className="stat-label">km</div>
         </div>
       </div>
 
-      <div className="charts-container">
-        <div className="chart-box">
-          <h3>Büyüklük Dağılımı</h3>
+      <div className="magnitude-distribution">
+        <h3>Büyüklük Dağılımı</h3>
+        <div className="chart-container">
           <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={magnitudeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="magnitude" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#48bb78" name="Deprem Sayısı" />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-
-        <div className="chart-box">
-          <h3>Derinlik Dağılımı</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={depthRanges}>
+            <BarChart data={stats.magnitudeDistribution}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="range" />
               <YAxis />
               <Tooltip />
-              <Legend />
-              <Bar dataKey="count" fill="#4299e1" name="Deprem Sayısı" />
+              <Bar dataKey="count" fill="#48bb78" />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
     </div>
   );
-}
+};
 
 export default Statistics; 

@@ -1,18 +1,34 @@
 // Bildirim izni isteme
 export const requestNotificationPermission = async () => {
   if (!("Notification" in window)) {
-    alert("Bu tarayıcı bildirim desteği sunmuyor");
+    console.log("Bu tarayıcı bildirim desteklemiyor");
     return false;
   }
 
-  const permission = await Notification.requestPermission();
-  return permission === "granted";
+  try {
+    const permission = await Notification.requestPermission();
+    return permission === "granted";
+  } catch (error) {
+    console.error("Bildirim izni alınamadı:", error);
+    return false;
+  }
 };
 
 // Bildirim gönderme
-export const sendNotification = (title, options) => {
+export const sendNotification = (title, options = {}) => {
+  if (!("Notification" in window)) {
+    return;
+  }
+
   if (Notification.permission === "granted") {
-    new Notification(title, options);
+    try {
+      new Notification(title, {
+        icon: "/logo192.png",
+        ...options
+      });
+    } catch (error) {
+      console.error("Bildirim gönderilemedi:", error);
+    }
   }
 };
 

@@ -4,7 +4,7 @@ import './App.css';
 import EarthquakeList from './components/EarthquakeList';
 import EarthquakeMap from './components/EarthquakeMap';
 import Dashboard from './components/Dashboard';
-import { requestNotificationPermission, calculateDistance } from './utils/notificationUtils';
+import { requestNotificationPermission, calculateDistance, sendNotification } from './utils/notificationUtils';
 import Logo from './components/Logo';
 import Statistics from './components/Statistics';
 import Footer from './components/Footer';
@@ -12,9 +12,8 @@ import ImageUpload from './components/ImageUpload';
 import DamageReports from './components/DamageReports';
 import { addDamageReport, getDamageReports } from './services/damageReportService';
 import DamageReportForm from './components/DamageReportForm';
-import * as localDB from './services/localDatabase';
-import { initSync } from './services/syncService';
-import { subscribeUserToPush, sendNotification } from './services/notificationService';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -51,43 +50,36 @@ function App() {
     setupPermissions();
   }, []);
 
-  // Deprem verilerini çeken fonksiyon
-  const fetchEarthquakes = async () => {
-    try {
-      const response = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
-      const data = await response.json();
-      
-      if (data.status) {
-        // Depremleri tarih sırasına göre sırala
-        const sortedEarthquakes = data.result.sort((a, b) => 
-          new Date(b.date) - new Date(a.date)
-        );
-        
-        // Son 100 depremi al
-        return sortedEarthquakes.slice(0, 100);
-      }
-      return [];
-    } catch (error) {
-      console.error('Deprem verileri alınamadı:', error);
-      return [];
-    }
-  };
-
   // Deprem verilerini çekme ve kontrol etme
   useEffect(() => {
     const checkEarthquakes = async () => {
       try {
-        const response = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live');
+        // Kandilli API'si
+        const response = await fetch('https://api.orhanaydogdu.com.tr/deprem/kandilli/live', {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
         
         if (data && data.result) {
-          setEarthquakes(data.result);
+          const sortedEarthquakes = data.result
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 500); // Son 500 depremi al
+          
+          console.log('Deprem verileri başarıyla alındı:', sortedEarthquakes.length);
+          setEarthquakes(sortedEarthquakes);
 
           // Yeni deprem kontrolü
-          if (userLocation && data.result.length > 0) {
-            const latestEarthquake = data.result[0];
+          if (userLocation && sortedEarthquakes.length > 0) {
+            const latestEarthquake = sortedEarthquakes[0];
             
-            // Son kontrol edilen depremden farklı mı?
             if (!lastCheckedEarthquake || lastCheckedEarthquake.date !== latestEarthquake.date) {
               const distance = calculateDistance(
                 userLocation.lat,
@@ -96,13 +88,12 @@ function App() {
                 latestEarthquake.geojson.coordinates[0]
               );
 
-              // Kullanıcıya 100km yakınında ve 3+ büyüklüğünde deprem olduysa bildirim gönder
               if (distance <= 100 && latestEarthquake.mag >= 3) {
                 sendNotification(
                   "Yakınınızda Deprem!",
                   {
                     body: `${latestEarthquake.title}\nBüyüklük: ${latestEarthquake.mag}\nUzaklık: ${Math.round(distance)} km`,
-                    icon: "/earthquake-icon.png", // İkon ekleyebilirsiniz
+                    icon: "/earthquake-icon.png",
                     vibrate: [200, 100, 200]
                   }
                 );
@@ -115,16 +106,13 @@ function App() {
         setLoading(false);
       } catch (error) {
         console.error('Veri çekerken hata oluştu:', error);
+        setEarthquakes([]);
         setLoading(false);
       }
     };
 
-    // İlk kontrol
     checkEarthquakes();
-
-    // Her 5 dakikada bir kontrol et
     const interval = setInterval(checkEarthquakes, 5 * 60 * 1000);
-
     return () => clearInterval(interval);
   }, [userLocation, lastCheckedEarthquake]);
 
@@ -136,6 +124,7 @@ function App() {
         setDamageReports(reports);
       } catch (error) {
         console.error('Raporlar yüklenirken hata:', error);
+        setDamageReports([]);
       } finally {
         setIsLoadingReports(false);
       }
@@ -149,78 +138,22 @@ function App() {
     try {
       const newReport = await addDamageReport(report);
       setDamageReports(prev => [newReport, ...prev]);
+      toast.success('Rapor başarıyla gönderildi!', {
+        position: "top-right",
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true
+      });
     } catch (error) {
       console.error('Rapor eklenirken hata:', error);
-      // Burada kullanıcıya hata mesajı gösterilebilir
+      toast.error('Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.', {
+        position: "top-right",
+        autoClose: 5000
+      });
     }
   };
-
-  // Offline veri senkronizasyonu
-  useEffect(() => {
-    const syncData = async () => {
-      try {
-        // Online ise verileri çek ve lokale kaydet
-        if (navigator.onLine) {
-          const earthquakes = await fetchEarthquakes();
-          await localDB.saveEarthquakes(earthquakes);
-          setEarthquakes(earthquakes);
-        } else {
-          // Offline ise lokal verileri kullan
-          const localEarthquakes = await localDB.getEarthquakes();
-          setEarthquakes(localEarthquakes);
-        }
-      } catch (error) {
-        console.error('Veri senkronizasyonu hatası:', error);
-      }
-    };
-
-    syncData();
-  }, []);
-
-  // Online/Offline durumu dinle
-  useEffect(() => {
-    const handleOnline = () => {
-      console.log('Online moda geçildi');
-      // Online olunca verileri güncelle
-    };
-
-    const handleOffline = () => {
-      console.log('Offline moda geçildi');
-      // Offline durumunu kullanıcıya bildir
-    };
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  // Service worker ve sync başlatma
-  useEffect(() => {
-    const initApp = async () => {
-      try {
-        // Push notification'a abone ol
-        await subscribeUserToPush();
-        
-        // Senkronizasyonu başlat
-        initSync();
-        
-        // Offline durumu kontrol et
-        if (!navigator.onLine) {
-          sendNotification('Çevrimdışı Mod', {
-            body: 'Şu anda çevrimdışı moddasınız. Veriler önbelleğe alınacak.'
-          });
-        }
-      } catch (error) {
-        console.error('App initialization error:', error);
-      }
-    };
-
-    initApp();
-  }, []);
 
   return (
     <Router>
@@ -236,6 +169,7 @@ function App() {
         addDamageReport={handleAddDamageReport}
         isLoadingReports={isLoadingReports}
       />
+      <ToastContainer />
     </Router>
   );
 }
@@ -253,6 +187,7 @@ function AppContent({
   addDamageReport,
   isLoadingReports
 }) {
+  
   const location = useLocation();
   const navigate = useNavigate();
 

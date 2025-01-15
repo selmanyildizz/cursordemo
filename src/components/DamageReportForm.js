@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './DamageReportForm.css';
+import { toast } from 'react-toastify';
 
 const DamageReportForm = ({ onSubmit }) => {
   const navigate = useNavigate();
@@ -11,14 +12,26 @@ const DamageReportForm = ({ onSubmit }) => {
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   useEffect(() => {
-    getLocation();
+    const initLocation = async () => {
+      try {
+        await getLocation();
+      } catch (error) {
+        console.error('Başlangıç konumu alınamadı:', error);
+      }
+    };
+
+    initLocation();
   }, []);
 
   const getLocation = async () => {
     setIsLoadingLocation(true);
     try {
       const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject);
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        });
       });
       
       const lat = position.coords.latitude;
@@ -26,39 +39,16 @@ const DamageReportForm = ({ onSubmit }) => {
       
       setAutoLocation({
         lat: lat,
-        lon: lng
+        lng: lng
       });
-      
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-      );
-      const data = await response.json();
-      setLocation(data.display_name);
+
+      setLocation(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
     } catch (error) {
       console.error('Konum alınamadı:', error);
+      alert('Konum alınamadı. Lütfen konum izinlerini kontrol edin veya konumu manuel girin.');
     } finally {
       setIsLoadingLocation(false);
     }
-  };
-
-  const compressImage = async (imageFile, maxWidth = 800) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const ratio = maxWidth / img.width;
-          canvas.width = maxWidth;
-          canvas.height = img.height * ratio;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          resolve(canvas.toDataURL(imageFile.type, 0.7));
-        };
-      };
-    });
   };
 
   const handleImageUpload = async (event) => {
@@ -66,10 +56,9 @@ const DamageReportForm = ({ onSubmit }) => {
     const imagePromises = files.map(file => {
       return new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = async () => {
-          const compressedImage = await compressImage(file);
+        reader.onloadend = () => {
           resolve({
-            url: compressedImage,
+            url: reader.result,
             name: file.name,
             type: file.type
           });
@@ -88,34 +77,32 @@ const DamageReportForm = ({ onSubmit }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (selectedImages.length === 0) {
-      alert('Lütfen en az bir fotoğraf ekleyin');
+      toast.warning('Lütfen en az bir fotoğraf ekleyin', {
+        position: "top-right",
+        autoClose: 3000
+      });
       return;
     }
 
-    console.log('autoLocation:', autoLocation);
-
     const damageReport = {
-      id: Date.now(),
       images: selectedImages,
       location,
-      coordinates: {
-        lat: parseFloat(autoLocation?.lat) || 39.0,
-        lng: parseFloat(autoLocation?.lon) || 35.0
-      },
+      coordinates: autoLocation || { lat: 39.0, lng: 35.0 },
       description,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
-
-    console.log('Rapor koordinatları:', damageReport.coordinates);
 
     try {
       await onSubmit(damageReport);
       navigate('/damage-reports');
     } catch (error) {
       console.error('Rapor gönderilirken hata:', error);
-      alert('Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.');
+      toast.error('Rapor gönderilirken bir hata oluştu. Lütfen tekrar deneyin.', {
+        position: "top-right",
+        autoClose: 5000
+      });
     }
   };
 
@@ -124,82 +111,65 @@ const DamageReportForm = ({ onSubmit }) => {
       <div className="form-container">
         <h2>Hasar Bildirimi</h2>
         <form onSubmit={handleSubmit}>
-          <div className="form-section">
-            <h3>Fotoğraflar</h3>
-            <div className="image-upload-area">
-              <label className="upload-button" htmlFor="imageInput">
-                📸 Fotoğraf Ekle
-              </label>
+          <div className="form-group">
+            <label>Fotoğraflar</label>
+            <div className="image-upload-container">
               <input
                 type="file"
-                id="imageInput"
                 accept="image/*"
                 multiple
                 onChange={handleImageUpload}
-                style={{ display: 'none' }}
+                className="image-input"
               />
-            </div>
-            
-            <div className="images-preview">
-              {selectedImages.map((image, index) => (
-                <div key={index} className="image-preview-container">
-                  <img src={image.url} alt={`Seçilen fotoğraf ${index + 1}`} />
-                  <button 
-                    type="button"
-                    className="remove-image"
-                    onClick={() => removeImage(index)}
-                  >
-                    ✕
-                  </button>
-                </div>
-              ))}
+              <div className="selected-images">
+                {selectedImages.map((image, index) => (
+                  <div key={index} className="image-preview">
+                    <img src={image.url} alt={`Preview ${index + 1}`} />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="remove-image"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
 
-          <div className="form-section">
-            <h3>Konum Bilgisi</h3>
-            <div className="location-input-group">
-              <input
-                type="text"
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Örn: Kadıköy, İstanbul"
-                required
-              />
-              <button 
-                type="button"
-                className="auto-location-button"
-                onClick={getLocation}
-                disabled={isLoadingLocation}
-              >
-                {isLoadingLocation ? '...' : '📍'}
-              </button>
-            </div>
+          <div className="form-group">
+            <label>Konum</label>
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Konum bilgisi"
+              required
+            />
+            <button
+              type="button"
+              onClick={getLocation}
+              className="get-location-button"
+              disabled={isLoadingLocation}
+            >
+              {isLoadingLocation ? 'Konum Alınıyor...' : 'Konumumu Bul'}
+            </button>
           </div>
 
-          <div className="form-section">
-            <h3>Hasar Açıklaması</h3>
+          <div className="form-group">
+            <label>Açıklama</label>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Hasar durumunu detaylı bir şekilde açıklayın..."
+              placeholder="Hasar hakkında detaylı bilgi"
               required
-              rows={5}
             />
           </div>
 
-          <div className="button-group">
-            <button type="submit" className="submit-button">
-              Raporu Gönder
-            </button>
-            <button 
-              type="button" 
-              className="cancel-button"
-              onClick={() => navigate(-1)}
-            >
-              İptal
-            </button>
-          </div>
+          <button type="submit" className="submit-button">
+            Raporu Gönder
+          </button>
         </form>
       </div>
     </div>

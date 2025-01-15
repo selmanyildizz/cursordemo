@@ -123,12 +123,7 @@ const DamageReports = ({ reports, isLoading }) => {
           <Slider {...sliderSettings}>
             {reports.map((report) => (
               <div key={report.id} className="report-slide">
-                <div className={`report-card ${report.pending ? 'pending' : ''}`}>
-                  {report.pending && (
-                    <div className="pending-badge">
-                      Gönderim Bekliyor
-                    </div>
-                  )}
+                <div className="report-card">
                   <div className="report-images">
                     {report.images.map((image, imgIndex) => (
                       <img 
