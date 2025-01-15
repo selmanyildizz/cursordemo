@@ -1,0 +1,75 @@
+.dashboard {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 20px;
+}
+
+.services-section {
+  padding: 20px;
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+.service-card {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s;
+}
+
+.service-card:hover {
+  transform: translateY(-2px);
+}
+
+.service-icon {
+  font-size: 2em;
+  margin-bottom: 10px;
+}
+
+.recent-earthquakes {
+  padding: 20px;
+}
+
+.recent-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.see-all-link {
+  color: #48bb78;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.earthquake-mini-card {
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.earthquake-mini-card:hover {
+  transform: translateY(-2px);
+}
+
+.mini-card-info {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  font-size: 0.9em;
+}
+
+.mini-card-info p {
+  margin: 5px 0;
+} 

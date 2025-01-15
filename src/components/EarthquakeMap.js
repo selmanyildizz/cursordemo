@@ -64,8 +64,12 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [12, 12],
 });
 
-function EarthquakeMap({ earthquakes, userLocation }) {
-  const mapCenter = userLocation ? [userLocation.lat, userLocation.lng] : [39.0, 35.0];
+function EarthquakeMap({ earthquakes, userLocation, selectedEarthquake }) {
+  const mapCenter = selectedEarthquake 
+    ? [parseFloat(selectedEarthquake.geojson.coordinates[1]), parseFloat(selectedEarthquake.geojson.coordinates[0])]
+    : userLocation 
+      ? [userLocation.lat, userLocation.lng] 
+      : [39.0, 35.0];
 
   const validEarthquakes = earthquakes.filter(quake => {
     const lat = parseFloat(quake.geojson.coordinates[1]);
@@ -77,7 +81,11 @@ function EarthquakeMap({ earthquakes, userLocation }) {
   console.log('Valid earthquakes:', validEarthquakes);
 
   return (
-    <MapContainer center={mapCenter} zoom={6} className="map-container">
+    <MapContainer 
+      center={mapCenter} 
+      zoom={selectedEarthquake ? 8 : 6} 
+      className="map-container"
+    >
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

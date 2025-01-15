@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './App.css';
 import EarthquakeList from './components/EarthquakeList';
 import EarthquakeMap from './components/EarthquakeMap';
+import Dashboard from './components/Dashboard';
 import { requestNotificationPermission, sendNotification, calculateDistance } from './utils/notificationUtils';
 
 function App() {
@@ -10,6 +12,7 @@ function App() {
   const [view, setView] = useState('list');
   const [userLocation, setUserLocation] = useState(null);
   const [lastCheckedEarthquake, setLastCheckedEarthquake] = useState(null);
+  const [selectedEarthquake, setSelectedEarthquake] = useState(null);
 
   // Konum izni ve bildirim izni alma
   useEffect(() => {
@@ -92,6 +95,33 @@ function App() {
   }, [userLocation, lastCheckedEarthquake]);
 
   return (
+    <Router>
+      <AppContent 
+        earthquakes={earthquakes}
+        loading={loading}
+        view={view}
+        setView={setView}
+        userLocation={userLocation}
+        selectedEarthquake={selectedEarthquake}
+        setSelectedEarthquake={setSelectedEarthquake}
+      />
+    </Router>
+  );
+}
+
+// AppContent bileşeni
+function AppContent({ 
+  earthquakes, 
+  loading, 
+  view, 
+  setView, 
+  userLocation, 
+  selectedEarthquake, 
+  setSelectedEarthquake 
+}) {
+  const location = useLocation();
+
+  return (
     <div className="App">
       <header className="App-header">
         <h1>Türkiye Deprem Takip</h1>
@@ -113,13 +143,41 @@ function App() {
       {loading ? (
         <p>Yükleniyor...</p>
       ) : (
-        <>
-          {view === 'map' ? (
-            <EarthquakeMap earthquakes={earthquakes} userLocation={userLocation} />
-          ) : (
-            <EarthquakeList earthquakes={earthquakes} userLocation={userLocation} />
-          )}
-        </>
+        <Routes>
+          <Route path="/" element={
+            view === 'map' ? (
+              <EarthquakeMap 
+                earthquakes={earthquakes} 
+                userLocation={userLocation}
+                selectedEarthquake={selectedEarthquake}
+              />
+            ) : (
+              <Dashboard 
+                earthquakes={earthquakes} 
+                userLocation={userLocation}
+                onEarthquakeSelect={setSelectedEarthquake}
+                setView={setView}
+              />
+            )
+          } />
+          <Route 
+            path="/allEarthquakes" 
+            element={
+              view === 'map' ? (
+                <EarthquakeMap 
+                  earthquakes={earthquakes} 
+                  userLocation={userLocation}
+                  selectedEarthquake={selectedEarthquake}
+                />
+              ) : (
+                <EarthquakeList 
+                  earthquakes={earthquakes} 
+                  userLocation={userLocation}
+                />
+              )
+            } 
+          />
+        </Routes>
       )}
     </div>
   );
