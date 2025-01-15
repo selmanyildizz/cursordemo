@@ -145,4 +145,18 @@ workbox.routing.registerRoute(
       })
     ]
   })
+);
+
+// Firebase istekleri için strateji
+workbox.routing.registerRoute(
+  ({url}) => url.href.includes('firestore.googleapis.com'),
+  new workbox.strategies.NetworkFirst({
+    cacheName: 'firebase-cache',
+    plugins: [
+      new workbox.expiration.ExpirationPlugin({
+        maxEntries: 100,
+        maxAgeSeconds: 30 * 60 // 30 dakika
+      })
+    ]
+  })
 ); 
