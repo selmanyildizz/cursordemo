@@ -21,12 +21,15 @@
   max-width: 1200px;
   margin: 0 auto;
   gap: 20px;
+  flex-wrap: wrap;
 }
 
 .logo-container {
   cursor: pointer;
   padding: 5px;
   transition: transform 0.2s;
+  display: flex;
+  align-items: center;
 }
 
 .logo-container:hover {
@@ -36,6 +39,7 @@
 h1 {
   margin: 0;
   flex-grow: 1;
+  font-size: 1.5rem;
 }
 
 .view-buttons {
@@ -44,13 +48,15 @@ h1 {
 }
 
 .view-buttons button {
-  padding: 10px 20px;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   background-color: #4a5568;
   color: white;
   transition: background-color 0.3s;
+  font-size: 0.9rem;
+  white-space: nowrap;
 }
 
 .view-buttons button.active {
@@ -62,8 +68,8 @@ h1 {
 }
 
 .logo-container svg {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   transition: transform 0.3s ease;
 }
 
@@ -84,5 +90,53 @@ h1 {
   }
   100% {
     stroke-width: 4;
+  }
+}
+
+/* Mobil için responsive tasarım */
+@media (max-width: 768px) {
+  .header-content {
+    justify-content: space-between;
+  }
+
+  h1 {
+    font-size: 1.2rem;
+    text-align: left;
+  }
+
+  .view-buttons button {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .logo-container svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* iPhone 12 ve benzer boyutlar için */
+@media (max-width: 390px) {
+  .header-content {
+    gap: 10px;
+  }
+
+  h1 {
+    font-size: 1rem;
+    flex: none;
+  }
+
+  .view-buttons {
+    gap: 5px;
+  }
+
+  .view-buttons button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
+
+  .logo-container svg {
+    width: 24px;
+    height: 24px;
   }
 } 
