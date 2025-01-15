@@ -5,22 +5,50 @@ import { db, storage } from '../firebase/config';
 // Hasar raporu ekle
 export const addDamageReport = async (report) => {
   try {
-    console.log('Gönderilen rapor:', report); // Debug için
+    // Resimleri Firebase Storage'a yükle
+    const uploadedImages = await Promise.all(
+      report.images.map(async (image) => {
+        try {
+          // Base64 string'i Blob'a çevir
+          const base64Response = await fetch(image.url);
+          const blob = await base64Response.blob();
 
-    // Firestore'a raporu kaydet
+          // Storage'a yükle
+          const fileName = `${Date.now()}-${image.name}`;
+          const storageRef = ref(storage, `damage-reports/${fileName}`);
+          await uploadBytes(storageRef, blob);
+          const downloadUrl = await getDownloadURL(storageRef);
+
+          return {
+            url: downloadUrl,
+            name: image.name
+          };
+        } catch (error) {
+          console.error('Resim yükleme hatası:', error);
+          throw error;
+        }
+      })
+    );
+
+    // Firestore'a sadece URL'leri kaydet
     const docRef = await addDoc(collection(db, 'damageReports'), {
       location: report.location,
       coordinates: report.coordinates,
       description: report.description,
       timestamp: new Date().toISOString(),
-      images: report.images
+      images: uploadedImages.map(img => ({
+        url: img.url,
+        name: img.name
+      }))
     });
-
-    console.log('Rapor başarıyla kaydedildi:', docRef.id); // Debug için
 
     return {
       id: docRef.id,
-      ...report
+      location: report.location,
+      coordinates: report.coordinates,
+      description: report.description,
+      timestamp: new Date().toISOString(),
+      images: uploadedImages
     };
   } catch (error) {
     console.error('Hasar raporu eklenirken hata:', error);
