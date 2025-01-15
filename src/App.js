@@ -8,6 +8,10 @@ import { requestNotificationPermission, sendNotification, calculateDistance } fr
 import Logo from './components/Logo';
 import Statistics from './components/Statistics';
 import Footer from './components/Footer';
+import ImageUpload from './components/ImageUpload';
+import DamageReports from './components/DamageReports';
+import { addDamageReport, getDamageReports } from './services/damageReportService';
+import DamageReportForm from './components/DamageReportForm';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -16,6 +20,8 @@ function App() {
   const [userLocation, setUserLocation] = useState(null);
   const [lastCheckedEarthquake, setLastCheckedEarthquake] = useState(null);
   const [selectedEarthquake, setSelectedEarthquake] = useState(null);
+  const [damageReports, setDamageReports] = useState([]);
+  const [isLoadingReports, setIsLoadingReports] = useState(true);
 
   // Konum izni ve bildirim izni alma
   useEffect(() => {
@@ -97,6 +103,33 @@ function App() {
     return () => clearInterval(interval);
   }, [userLocation, lastCheckedEarthquake]);
 
+  // Hasar raporlarını yükle
+  useEffect(() => {
+    const loadReports = async () => {
+      try {
+        const reports = await getDamageReports();
+        setDamageReports(reports);
+      } catch (error) {
+        console.error('Raporlar yüklenirken hata:', error);
+      } finally {
+        setIsLoadingReports(false);
+      }
+    };
+
+    loadReports();
+  }, []);
+
+  // Hasar raporu ekleme fonksiyonu
+  const handleAddDamageReport = async (report) => {
+    try {
+      const newReport = await addDamageReport(report);
+      setDamageReports(prev => [newReport, ...prev]);
+    } catch (error) {
+      console.error('Rapor eklenirken hata:', error);
+      // Burada kullanıcıya hata mesajı gösterilebilir
+    }
+  };
+
   return (
     <Router>
       <AppContent 
@@ -107,6 +140,9 @@ function App() {
         userLocation={userLocation}
         selectedEarthquake={selectedEarthquake}
         setSelectedEarthquake={setSelectedEarthquake}
+        damageReports={damageReports}
+        addDamageReport={handleAddDamageReport}
+        isLoadingReports={isLoadingReports}
       />
     </Router>
   );
@@ -120,7 +156,10 @@ function AppContent({
   setView, 
   userLocation, 
   selectedEarthquake, 
-  setSelectedEarthquake 
+  setSelectedEarthquake,
+  damageReports,
+  addDamageReport,
+  isLoadingReports
 }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -144,6 +183,7 @@ function AppContent({
           </div>
           <h1>Türkiye Deprem Takip</h1>
           <div className="view-buttons">
+            <ImageUpload onSubmit={addDamageReport} />
             {location.pathname === '/' ? (
               view === 'map' ? (
                 <button 
@@ -169,6 +209,12 @@ function AppContent({
               onClick={() => navigate('/statistics')}
             >
               İstatistikler
+            </button>
+            <button 
+              className={location.pathname === '/damage-reports' ? 'active' : ''} 
+              onClick={() => navigate('/damage-reports')}
+            >
+              Hasar Raporları
             </button>
           </div>
         </div>
@@ -214,6 +260,14 @@ function AppContent({
                   />
                 )
               } 
+            />
+            <Route 
+              path="/damage-reports" 
+              element={<DamageReports reports={damageReports} />} 
+            />
+            <Route 
+              path="/damage-reports/new" 
+              element={<DamageReportForm onSubmit={addDamageReport} />} 
             />
           </Routes>
         </main>

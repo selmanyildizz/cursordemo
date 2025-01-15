@@ -1,0 +1,182 @@
+.damage-reports {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.map-section, .reports-section {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.map-section h2, .reports-section h2 {
+  color: #2d3748;
+  margin-bottom: 20px;
+}
+
+.map-container {
+  height: 500px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.reports-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.report-card {
+  background: #f7fafc;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s;
+}
+
+.report-card:hover {
+  transform: translateY(-5px);
+}
+
+.report-images {
+  position: relative;
+  padding-top: 50%;
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.report-images img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.report-info {
+  padding: 15px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.report-info .location {
+  font-weight: bold;
+  color: #2d3748;
+  margin-bottom: 5px;
+}
+
+.report-info .description {
+  color: #4a5568;
+  margin-bottom: 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.report-info .timestamp {
+  color: #718096;
+  font-size: 0.9em;
+}
+
+.report-popup {
+  max-width: 200px;
+}
+
+.report-popup img {
+  width: 100%;
+  border-radius: 4px;
+  margin-bottom: 8px;
+}
+
+.loading, .no-reports {
+  text-align: center;
+  padding: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.loading h2, .no-reports h2 {
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.loading p, .no-reports p {
+  color: #4a5568;
+}
+
+.reports-carousel {
+  padding: 20px 40px;
+}
+
+.report-slide {
+  padding: 10px;
+  height: 400px;
+}
+
+/* Slider okları için stiller */
+.slick-prev,
+.slick-next {
+  width: 30px;
+  height: 30px;
+  z-index: 1;
+}
+
+.slick-prev {
+  left: 0;
+}
+
+.slick-next {
+  right: 0;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: #4a5568;
+  font-size: 24px;
+}
+
+/* Slider noktaları için stiller */
+.slick-dots {
+  bottom: -30px;
+}
+
+.slick-dots li button:before {
+  color: #4a5568;
+}
+
+.slick-dots li.slick-active button:before {
+  color: #48bb78;
+}
+
+/* Responsive düzenlemeler */
+@media (max-width: 768px) {
+  .damage-reports {
+    padding: 10px;
+  }
+
+  .map-container {
+    height: 300px;
+  }
+
+  .reports-carousel {
+    padding: 20px 30px;
+  }
+
+  .report-slide {
+    padding: 5px;
+    height: 350px;
+  }
+} 
