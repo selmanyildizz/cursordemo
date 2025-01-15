@@ -139,4 +139,22 @@ h1 {
     width: 24px;
     height: 24px;
   }
+}
+
+.back-button {
+  background-color: #4299e1 !important; /* mavi tonu */
+}
+
+.back-button:hover {
+  background-color: #3182ce !important;
+}
+
+/* iPhone 12 ve benzer boyutlar için */
+@media (max-width: 390px) {
+  /* ... diğer mobil stiller ... */
+
+  .back-button {
+    padding: 5px 10px;
+    font-size: 0.8rem;
+  }
 } 

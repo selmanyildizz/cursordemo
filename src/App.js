@@ -126,7 +126,13 @@ function AppContent({
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
+    setView('list');
     navigate('/');
+  };
+
+  const handleBackToHome = () => {
+    setView('list');
+    setSelectedEarthquake(null);
   };
 
   return (
@@ -138,12 +144,26 @@ function AppContent({
           </div>
           <h1>Türkiye Deprem Takip</h1>
           <div className="view-buttons">
-            <button 
-              className={location.pathname === '/statistics' ? '' : 'active'} 
-              onClick={() => navigate('/')}
-            >
-              Ana Sayfa
-            </button>
+            {location.pathname === '/' ? (
+              view === 'map' ? (
+                <button 
+                  onClick={handleBackToHome}
+                  className="back-button"
+                >
+                  ← Ana Sayfa
+                </button>
+              ) : null
+            ) : (
+              <button 
+                className={location.pathname === '/statistics' ? '' : 'active'} 
+                onClick={() => {
+                  setView('list');
+                  navigate('/');
+                }}
+              >
+                Ana Sayfa
+              </button>
+            )}
             <button 
               className={location.pathname === '/statistics' ? 'active' : ''} 
               onClick={() => navigate('/statistics')}

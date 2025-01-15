@@ -32,7 +32,7 @@ const Footer = () => {
         </div>
       </div>
       <div className="footer-bottom">
-        <p>© {year} Deprem Takip. Designed by <a href="https://github.com/selmanyildiz" target="_blank" rel="noopener noreferrer">Selman Yıldız</a></p>
+        <p>© {year} Deprem Takip. Designed by <a href="https://github.com/selmanyildizz" target="_blank" rel="noopener noreferrer">Selman Yıldız</a></p>
       </div>
     </footer>
   );
