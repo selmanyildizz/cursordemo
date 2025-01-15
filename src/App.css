@@ -5,18 +5,36 @@
 
 .App-header {
   background-color: #282c34;
-  padding: 20px;
+  padding: 10px 20px;
   color: white;
   margin-bottom: 20px;
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.logo-container {
+  cursor: pointer;
+  padding: 5px;
+  transition: transform 0.2s;
+}
+
+.logo-container:hover {
+  transform: scale(1.05);
+}
+
 h1 {
-  margin: 0 0 20px 0;
+  margin: 0;
+  flex-grow: 1;
 }
 
 .view-buttons {
   display: flex;
-  justify-content: center;
   gap: 10px;
 }
 
@@ -36,4 +54,30 @@ h1 {
 
 .view-buttons button:hover {
   background-color: #48bb78;
+}
+
+.logo-container svg {
+  width: 40px;
+  height: 40px;
+  transition: transform 0.3s ease;
+}
+
+.logo-container:hover svg {
+  transform: scale(1.1);
+}
+
+.logo-container svg path {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    stroke-width: 4;
+  }
+  50% {
+    stroke-width: 6;
+  }
+  100% {
+    stroke-width: 4;
+  }
 } 

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import './App.css';
 import EarthquakeList from './components/EarthquakeList';
 import EarthquakeMap from './components/EarthquakeMap';
 import Dashboard from './components/Dashboard';
 import { requestNotificationPermission, sendNotification, calculateDistance } from './utils/notificationUtils';
+import Logo from './components/Logo';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -120,24 +121,34 @@ function AppContent({
   setSelectedEarthquake 
 }) {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogoClick = () => {
+    navigate('/');
+  };
 
   return (
     <div className="App">
       <header className="App-header">
-        <h1>Türkiye Deprem Takip</h1>
-        <div className="view-buttons">
-          <button 
-            className={view === 'list' ? 'active' : ''} 
-            onClick={() => setView('list')}
-          >
-            Liste Görünümü
-          </button>
-          <button 
-            className={view === 'map' ? 'active' : ''} 
-            onClick={() => setView('map')}
-          >
-            Harita Görünümü
-          </button>
+        <div className="header-content">
+          <div className="logo-container" onClick={handleLogoClick}>
+            <Logo />
+          </div>
+          <h1>Türkiye Deprem Takip</h1>
+          <div className="view-buttons">
+            <button 
+              className={view === 'list' ? 'active' : ''} 
+              onClick={() => setView('list')}
+            >
+              Liste Görünümü
+            </button>
+            <button 
+              className={view === 'map' ? 'active' : ''} 
+              onClick={() => setView('map')}
+            >
+              Harita Görünümü
+            </button>
+          </div>
         </div>
       </header>
       {loading ? (
